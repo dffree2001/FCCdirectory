@@ -1,0 +1,113 @@
+#import("_cms/formats/directory/divisions")
+##set($directory = $_.query().byContentType("Directory Detail").sortBy("name").indexableOnly(true).execute())
+#set($directory = $_.query().byContentType("Directory Detail").sortBy("name").maxResults(2000).indexableOnly(true).execute())
+#set($alphaCounter = 0)
+#set($directoryLetter = "A")
+#set($compareLetter = "")
+<div class="flex_funk fullwidthfix">
+    <h1>Directory</h1>
+    <p>The directory does not yet work and is not a complete list.  Here is a document listing everyone <a href="site://SCCCD/_uploaded-files/documents/scccd-telephone-directory.pdf">District Telephone Directory</a></p>
+    #*<div id='search-box'>
+        <form action='/search' id='search-form' method='get' target='_top'>
+            <input id='search-text' name='q' placeholder='Input Search Terms' type='text' aria-labelledby='search-text' />
+            <button id='search-button' type='submit'><span>Search</span></button>
+        </form>
+    </div>*#
+    ##<p class="directorySelector"><a href="#">ALL</a>&#160;&#160;<a href="#">A</a>&#160;&#160;<a href="#">B</a>&#160;&#160;<a href="#">C</a>&#160;&#160;<a href="#">D</a>&#160;&#160;<a href="#">E</a>&#160;&#160;<a href="#">F</a>&#160;&#160;<a href="#">G</a>&#160;&#160;<a href="#">H</a>&#160;&#160;<a href="#">I</a>&#160;&#160;<a href="#">J</a>&#160;&#160;<a href="#">K</a>&#160;&#160;<a href="#">L</a>&#160;&#160;<a href="#">M</a>&#160;&#160;<a href="#">N</a>&#160;&#160;<a href="#">O</a>&#160;&#160;<a href="#">P</a>&#160;&#160;<a href="#">Q</a>&#160;&#160;<a href="#">R</a>&#160;&#160;<a href="#">S</a>&#160;&#160;<a href="#">T</a>&#160;&#160;<a href="#">U</a>&#160;&#160;<a href="#">V</a>&#160;&#160;<a href="#">W</a>&#160;&#160;<a href="#">X</a>&#160;&#160;<a href="#">Y</a>&#160;&#160;<a href="#">Z</a></p>
+    
+    <table class="staff">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Division</th>
+          <th>Departments</th>
+          <th>Position</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <td>&#160;</td>
+        </tr>
+      </thead>
+      <tbody>
+        #foreach($person in $directory)
+            #if (!$person.path.contains("base-assets"))
+                ## Data sets
+                #set($metadata = $person.metadata)
+                #set($contact = $person.getStructuredDataNode('contact'))
+                #set($social = $person.getStructuredDataNode('sidebar'))
+                ## Initialize & define variables
+                #set($position = 'N/A')
+                #set($phone = 'N/A')
+                #set($email = 'N/A')
+                #set($division = "")
+                #set($divId = "")
+                #set($depts = "")
+                #set($image = '/_files/images/faculty-directory-listing.png')
+                #set($fName = $_EscapeTool.xml($person.metadata.getDynamicField('fname').value))
+                #set($lName = $_EscapeTool.xml($person.metadata.getDynamicField('lname').value))
+                #if($lName)
+                    #set($directoryLetter = $_DisplayTool.cell($lName,1))
+                    ##if($alphaCounter == 0)
+                        ##set($alphaCounter = $alphaCounter + 1)
+                        ##set($directoryPrintLetter = $directoryLetter)
+                        
+                    #if($compareLetter == $directoryLetter)
+                        #set($alphaCounter = $alphaCounter + 1)
+                        #set($directoryPrintLetter = "")
+                       
+                    #elseif($compareLetter != $directoryLetter)
+                        #set($alphaCounter = 1)
+                        #set($directoryPrintLetter = $directoryLetter)
+                       
+                    #end
+                    #set($compareLetter = $directoryLetter)
+                #else
+                    #set($directoryLetter = "")
+                #end
+                #set($compareLetter = $directoryLetter)
+                #if(!$_PropertyTool.isEmpty($metadata.getDynamicField('position').value))
+                    #set($position = $_EscapeTool.xml($metadata.getDynamicField('position').value))
+                #end
+                #set($division = $_EscapeTool.xml($person.getStructuredDataNode('division').textValue))
+                #set ($divId = $divisions[$division])
+                #if ($divId && $divId != "")
+                    #set($depts = $person.getStructuredDataNode($divisions[$division]))
+                #end
+                #if(!$_PropertyTool.isEmpty($contact.getChild('phone').textValue))
+                    #set($phone = $_EscapeTool.xml($contact.getChild('phone').textValue))
+                #end
+                #if(!$_PropertyTool.isEmpty($contact.getChild('email').textValue))
+                    #set($email = $_EscapeTool.xml($contact.getChild('email').textValue))
+                #end
+                #if($social.getChild('thumbnail').asset)
+                    #set($image = $social.getChild('thumbnail').asset.link)
+                    #set($alt = $_EscapeTool.xml($social.getChild('alt').textValue))
+                #end
+                #if($directoryPrintLetter != "")
+                    <tr>
+                        
+                        <td><h2 class="directLetter">$directoryPrintLetter</h2></td>
+                    </tr>
+                #end
+                <tr>
+                   
+                    <td data-label="Name" class="directoryName"><a href="${person.link}">$fName $lName</a></td>
+                    <td data-label="Division">$division</td>
+                    <td data-label="Departments">
+                    #if ($depts && $depts != "")
+                        #foreach ($dept in $depts.textValues)
+                            #if ($dept != "")
+                                ${dept}#if($foreach.hasNext)<br/>#end
+                            #end
+                        #end
+                    #end
+                    </td>
+                    <td data-label="Position">$position</td>
+                    <td data-label="Phone">$phone</td>
+                    <td data-label="Email"><a href="mailto:${email}">$email</a></td>
+                    <td><img src="${image}" alt="$!{alt}"/></td>
+                </tr>
+            #end
+        #end 
+        </tbody>
+    </table>
+</div>
